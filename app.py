@@ -1,103 +1,85 @@
 import streamlit as st
+import cv2
 import numpy as np
-import pandas as pd
-import plotly.express as px
-from tensorflow.keras.models import load_model as keras_load_model
-from PIL import Image
+from tensorflow.keras.models import load_model
+import tensorflow as tf
 
 # Modelni yuklash
-@st.cache_resource
-def load_my_model():
-    try:
-        model_path = 'custom_face_model.keras'
-        model = keras_load_model(model_path)
-        return model
-    except Exception as e:
-        st.error(f"Model yuklanmadi. Xato: {str(e)}")
-        return None
+model = load_model('custom_face_model.keras')
 
-model = load_my_model()
+# Klass nomlari (Asadbek va Temurbek)
+class_names = ['Asadbek', 'Temurbek']
 
-# Yuzni aniqlash funksiyasi
-def predict_face(image):
-    # Rasmni tayyorlash
-    img = image.resize((50, 37))  # Modelning kiritish shakliga moslashtirish
-    img = img.convert('L')  # Grayscale ga o‘tkazish
-    img = np.array(img) / 255.0  # Normalizatsiya
-    img = np.expand_dims(img, axis=-1)  # (50, 37, 1) shaklini yaratish
-    img = np.expand_dims(img, axis=0)  # Batch o‘lchamini qo‘shish
-    pred = model.predict(img)
-    return pred
+# Yuzni aniqlash uchun Haar Cascade Classifier
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-# Kameradan rasm olish
-st.title('Yuzni Aniqlash Modeli')
-st.write("Kameradan rasm oling, model shaxsning ismini (Asadbek yoki Temurbek) aniqlaydi.")
+# Yuz tasvirini model uchun tayyorlash
+def preprocess_image(image):
+    # Yuzni aniqlash
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    
+    if len(faces) == 0:
+        return None, None
+    
+    # Birinchi aniqlangan yuzni olish
+    (x, y, w, h) = faces[0]
+    face = image[y:y+h, x:x+w]
+    
+    # Yuzni model uchun o'lchamini o'zgartirish (modelingizga mos ravishda o'zgartiring)
+    face = cv2.resize(face, (224, 224))  # Model o'lchamiga moslashtiring
+    face = face / 255.0  # Normalizatsiya
+    face = np.expand_dims(face, axis=0)  # Batch o'lchamini qo'shish
+    
+    return face, (x, y, w, h)
 
-# Qo‘llanma
-st.sidebar.header("Ko‘rsatmalar")
-st.sidebar.write("""
-1. Kamerani ishga tushiring va yuzni aniq ko‘rinadigan rasm oling.
-2. Model shaxsning ismini aniqlaydi.
-3. Natijalar ishonchlilik foizi bilan ko‘rsatiladi.
+# Streamlit ilovasi
+st.title("Yuzni Aniqlash Ilovasi")
+st.write("Kamera orqali Asadbek yoki Temurbekni aniqlash")
 
-Eslatma: Yaxshiroq natija uchun faqat yuz ko‘rinadigan rasmlardan foydalaning.
-""")
+# Kamera tasvirini olish uchun Streamlit komponenti
+run = st.checkbox('Kamerani ishga tushirish')
+FRAME_WINDOW = st.image([])
 
-# Kameradan rasm olish uchun tugma
-video_file = st.camera_input("Kamera bilan rasm oling")
+cap = cv2.VideoCapture(0)  # Veb-kamerani ochish
 
-if video_file is not None and model is not None:
-    try:
-        # Rasmdan img ni oling
-        img = Image.open(video_file)
-        st.image(img, caption="Kamera orqali olingan rasm", width=300)
-
-        # Model yordamida bashorat qilish
-        pred = predict_face(img)
-
-        # Eng yuqori ehtimollikdagi kategoriyani aniqlash
-        predicted_class = np.argmax(pred[0])
-        categories = ['Asadbek', 'Temurbek']  # Tartibni test orqali aniqlang
-        predicted_name = categories[predicted_class]
-        confidence = pred[0][predicted_class] * 100
-
-        # Natijalarni ko‘rsatish
-        st.subheader("Asosiy natija:")
-        st.metric(label="Ism", value=predicted_name)
-        st.write(f"Ishonchlilik darajasi: {confidence:.1f}%")
-
-        # Ehtimolliklar grafigi
-        st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
-        df = pd.DataFrame({
-            'Kategoriya': ['Asadbek', 'Temurbek'],
-            'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]
-        })
-
-        # Saralash
-        df = df.sort_values('Ehtimollik (%)', ascending=False)
-
-        # Plotly bar chart
-        fig = px.bar(df, 
-                     x='Kategoriya', 
-                     y='Ehtimollik (%)',
-                     color='Ehtimollik (%)',
-                     color_continuous_scale='Bluered',
-                     text='Ehtimollik (%)',
-                     title='Yuzni aniqlash ehtimollari')
+if not cap.isOpened():
+    st.error("Kamera ochilmadi. Iltimos, kamerangiz ulanganligini tekshiring.")
+else:
+    while run:
+        ret, frame = cap.read()
+        if not ret:
+            st.error("Kameradan tasvir olinmadi.")
+            break
         
-        fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-        fig.update_yaxes(range=[0, 100])  # 0-100% oralig‘ini ko‘rsatish
+        # Tasvirni RGB formatiga o'tkazish (Streamlit uchun)
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
-        st.plotly_chart(fig, use_container_width=True)
-
-        # Pie chart
-        fig_pie = px.pie(df,
-                         names='Kategoriya',
-                         values='Ehtimollik (%)',
-                         title='Ehtimollarning taqsimlanishi')
+        # Yuzni aniqlash va modelga tayyorlash
+        processed_face, face_coords = preprocess_image(frame_rgb)
         
-        st.plotly_chart(fig_pie, use_container_width=True)
-
-    except Exception as e:
-        st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
+        if processed_face is not None:
+            # Model orqali bashorat qilish
+            predictions = model.predict(processed_face)
+            score = tf.nn.softmax(predictions[0])
+            predicted_class = class_names[np.argmax(score)]
+            confidence = 100 * np.max(score)
+            
+            # Natijani tasvirga chizish
+            if face_coords is not None:
+                (x, y, w, h) = face_coords
+                cv2.rectangle(frame_rgb, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                text = f"{predicted_class}: {confidence:.2f}%"
+                cv2.putText(frame_rgb, text, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            
+            # Natijani Streamlit'da ko'rsatish
+            st.write(f"Aniqlangan shaxs: **{predicted_class}** ({confidence:.2f}%)")
+        
+        # Tasvirni Streamlit'da ko'rsatish
+        FRAME_WINDOW.image(frame_rgb)
+        
+        # Kamerani to'xtatish uchun
+        if not run:
+            break
+    
+    cap.release()
