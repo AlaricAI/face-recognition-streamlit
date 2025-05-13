@@ -94,7 +94,7 @@ if video_file is not None and model is not None:
             predicted_name = CATEGORIES[predicted_index]
 
             # Debug ma'lumotlari
-            st.write(f"Model chiqishlari: {CATEGORIES[0]}: {pred[0]*100:.1f}%, {CATEGORIES[1]}: {pred[1]*100:.1f}%")
+            st.write(f"Model chiqishlari: {CATEGORIES[1]}: {pred[0]*100:.1f}%, {CATEGORIES[0]}: {pred[1]*100:.1f}%")
             st.write(f"Tanlangan indeks: {predicted_index}")
 
             # Yuzni ramkaga olish
