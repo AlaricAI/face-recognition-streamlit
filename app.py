@@ -106,7 +106,7 @@ if video_file is not None and model is not None:
             # Ehtimolliklar grafigi
             st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
             df = pd.DataFrame({
-                'Kategoriya': ['Asadbek', 'Temurbek'],
+                'Kategoriya': ['Temurbek', 'Asadbek'],
                 'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]
             })
 
