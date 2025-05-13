@@ -2,21 +2,21 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import plotly.express as px
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import load_model as keras_load_model
 from PIL import Image
 import io
 import base64
 
 # Modelni yuklash (avval modelni o'zingizni ishlatgan holda yuklab oling)
 @st.cache_resource
-def load_model():
+def load_my_model():
     try:
-        return load_model('custom_face_model.keras')  # modelni yuklash
+        return keras_load_model('custom_face_model.keras')
     except Exception as e:
         st.error(f"Model yuklanmadi. Xato: {str(e)}")
         return None
 
-model = load_model()
+model = load_my_model()
 
 # Yuzni aniqlash funksiyasi
 def predict_face(image):
