@@ -24,8 +24,9 @@ model = load_my_model()
 # Yuzni aniqlash uchun Haar Cascade Classifier
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-# Model kategoriyalari (model qanday o'qitilgan bo'lsa shu tartibda)
-CATEGORIES = ['Asadbek', 'Temurbek']  # Model chiqish tartibi shu ko'rinishda
+# Model kategoriyalari - BU QISMI MODEL O'QITILGAN TARTIBGA QAT'IY MOS KELISHI KERAK!
+# Agar model 0-indeks Asadbek, 1-indeks Temurbek deb o'qitilgan bo'lsa:
+CATEGORIES = ['Asadbek', 'Temurbek']  # BU TARTIBNI MODEL O'QITISHDA ISHLATILGAN TARTIBGA MOSLASHTIRING
 
 # Yuzni aniqlash va model uchun tayyorlash funksiyasi
 def predict_face(image):
@@ -46,15 +47,14 @@ def predict_face(image):
         face = img[y:y+h, x:x+w]
         
         # Yuzni model uchun tayyorlash
-        face = cv2.resize(face, (50, 37))  # Model o'lchamiga moslashtiring
-        face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)  # Grayscale ga o'tkazish
-        face = face / 255.0  # Normalizatsiya
-        face = np.expand_dims(face, axis=-1)  # (50, 37, 1) shaklini yaratish
-        face = np.expand_dims(face, axis=0)  # Batch o'lchamini qo'shish
+        face = cv2.resize(face, (50, 37))
+        face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
+        face = face / 255.0
+        face = np.expand_dims(face, axis=-1)
+        face = np.expand_dims(face, axis=0)
         
         # Model yordamida bashorat qilish
         pred = model.predict(face)
-        # Softmax orqali ehtimolliklarni normalizatsiya qilish
         pred = tf.nn.softmax(pred[0]).numpy()
         return pred, (x, y, w, h), img, None
     except Exception as e:
@@ -64,13 +64,13 @@ def predict_face(image):
 st.title('Yuzni Aniqlash Modeli')
 st.write("Kameradan rasm oling, model shaxsning ismini (Asadbek yoki Temurbek) aniqlaydi.")
 
-# Qo‘llanma
-st.sidebar.header("Ko‘rsatmalar")
+# Qo'llanma
+st.sidebar.header("Ko'rsatmalar")
 st.sidebar.write("""
-1. Kamerani ishga tushiring va yuzni aniq ko‘rinadigan rasm oling.
+1. Kamerani ishga tushiring va yuzni aniq ko'rinadigan rasm oling.
 2. Yuzingizni kameraga yaqin tuting va yaxshi yoritilgan joyda turing.
-3. Model shaxsning ismini aniqlaydi va ishonchlilik foizini ko‘rsatadi.
-Eslatma: Yaxshiroq natija uchun yuzingizni to‘g‘ridan-to‘g‘ri kameraga qarating.
+3. Model shaxsning ismini aniqlaydi va ishonchlilik foizini ko'rsatadi.
+Eslatma: Yaxshiroq natija uchun yuzingizni to'g'ridan-to'g'ri kameraga qarating.
 """)
 
 # Kameradan rasm olish uchun tugma
@@ -93,9 +93,9 @@ if video_file is not None and model is not None:
             confidence = np.max(pred) * 100
             predicted_name = CATEGORIES[predicted_index]
 
-            # Debug uchun ehtimolliklarni ko'rsatish (tartib model chiqishiga mos)
-            st.write(f"Xom ehtimolliklar: {CATEGORIES[0]}: {pred[0]*100:.1f}%, {CATEGORIES[1]}: {pred[1]*100:.1f}%")
-            st.write(f"Bashorat indeksi: {predicted_index}")
+            # Debug ma'lumotlari
+            st.write(f"Model chiqishlari: {CATEGORIES[0]}: {pred[0]*100:.1f}%, {CATEGORIES[1]}: {pred[1]*100:.1f}%")
+            st.write(f"Tanlangan indeks: {predicted_index}")
 
             # Yuzni ramkaga olish
             (x, y, w, h) = face_coords
@@ -111,7 +111,6 @@ if video_file is not None and model is not None:
             st.subheader("Asosiy natija:")
             st.metric(label="Ism", value=predicted_name)
             st.write(f"Ishonchlilik darajasi: {confidence:.1f}%")
-
 
     except Exception as e:
         st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
