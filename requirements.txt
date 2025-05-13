@@ -1,9 +1,9 @@
-tensorflow==2.16.1
 streamlit==1.29.0
-numpy==1.23.5
-pandas==2.0.3
-plotly==5.18.0
-Pillow==10.0.1
-fastai==2.7.12
-torch==2.0.1
-torchvision==0.15.2
+tensorflow==2.16.1
+numpy==1.26.4
+pandas==2.2.2
+plotly==5.22.0
+Pillow==10.3.0
+fastai==2.7.15
+torch==2.3.0
+torchvision==0.18.0
