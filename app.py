@@ -113,29 +113,6 @@ if video_file is not None and model is not None:
             # Saralash
             df = df.sort_values('Ehtimollik (%)', ascending=False)
 
-            # Plotly bar chart
-            fig = px.bar(df, 
-                         x='Kategoriya', 
-                         y='Ehtimollik (%)',
-                         color='Ehtimollik (%)',
-                         color_continuous_scale='Bluered',
-                         text='Ehtimollik (%)',
-                         title='Yuzni aniqlash ehtimollari')
             
-            fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-            fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-            fig.update_yaxes(range=[0, 100])  # 0-100% oralig‘ini ko‘rsatish
-            
-            st.plotly_chart(fig, use_container_width=True)
-
-            # Pie chart
-            fig_pie = px.pie(df,
-                             names='Kategoriya',
-                             values='Ehtimollik (%)',
-                             title='Ehtimollarning taqsimlanishi')
-            
-            st.plotly_chart(fig_pie, use_container_width=True)
-        else:
-            st.error("Yuz aniqlanmadi. Iltimos, yuzingizni kamera oldida aniq ko‘rsating.")
     except Exception as e:
         st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
