@@ -42,7 +42,7 @@ def load_my_model():
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 # 4. Kategoriyalar (model shu tartibda o'qitilgan bo'lishi kerak)
-CATEGORIES = ['Asadbek', 'Temurbek']
+CATEGORIES = ['Temurbek', 'Asadbek']
 
 # 5. Yuzni aniqlash va bashorat qilish funksiyasi
 def predict_face(image):
