@@ -5,6 +5,7 @@ import plotly.express as px
 from tensorflow.keras.models import load_model as keras_load_model
 from PIL import Image
 import cv2
+import tensorflow as tf
 
 # Modelni yuklash
 @st.cache_resource
@@ -50,6 +51,8 @@ def predict_face(image):
         
         # Model yordamida bashorat qilish
         pred = model.predict(face)
+        # Softmax orqali ehtimolliklarni normalizatsiya qilish
+        pred = tf.nn.softmax(pred[0]).numpy()
         return pred, (x, y, w, h), img, None
     except Exception as e:
         return None, None, img, f"Yuzni tahlil qilishda xato: {str(e)}"
@@ -83,10 +86,13 @@ if video_file is not None and model is not None:
             st.error(error)
         elif pred is not None:
             # Eng yuqori ehtimollikdagi kategoriyani aniqlash
-            predicted_class = np.argmax(pred[0])
-            categories = ['Temurbek', 'Asadbek']  # Tartibni model o'qitilgan ma'lumotlarga moslashtiring
+            predicted_class = np.argmax(pred)
+            categories = ['Asadbek', 'Temurbek']  # Model o'qitilgan tartibga moslashtiring
             predicted_name = categories[predicted_class]
-            confidence = pred[0][predicted_class] * 100
+            confidence = pred[predicted_class] * 100
+
+            # Debug uchun ehtimolliklarni ko‘rsatish
+            st.write(f"Xom ehtimolliklar: Asadbek: {pred[0]*100:.1f}%, Temurbek: {pred[1]*100:.1f}%")
 
             # Yuzni ramkaga olish
             (x, y, w, h) = face_coords
@@ -103,6 +109,5 @@ if video_file is not None and model is not None:
             st.metric(label="Ism", value=predicted_name)
             st.write(f"Ishonchlilik darajasi: {confidence:.1f}%")
 
-            
     except Exception as e:
         st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
