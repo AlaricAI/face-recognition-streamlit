@@ -11,7 +11,7 @@ import base64
 @st.cache_resource
 def load_model():
     try:
-        return load_model('your_model.h5')  # modelni yuklash
+        return load_model('custom_face_model.keras')  # modelni yuklash
     except Exception as e:
         st.error(f"Model yuklanmadi. Xato: {str(e)}")
         return None
