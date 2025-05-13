@@ -109,7 +109,6 @@ if video_file is not None and model is not None:
             st.metric(label="👤 Ism", value=predicted_name)
             st.write(f"Ishonchlilik darajasi: **{confidence:.1f}%**")
 
-            # Bar chart bilan ehtimollik ko‘rsatish
             df = pd.DataFrame({
                 "Kategoriya": CATEGORIES,
                 "Ehtimollik (%)": [pred[0]*100, pred[1]*100]
