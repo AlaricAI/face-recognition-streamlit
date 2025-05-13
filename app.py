@@ -57,7 +57,7 @@ if video_file:
 
             # Eng yuqori ehtimollikdagi kategoriyani aniqlash
             predicted_class = np.argmax(pred[0])
-            categories = ['Asadbek', 'Temurbek']  # Model o‘qitilgan tartibga moslashtiring
+            categories = ['Temurbek', 'Asadbek']  # Model o‘qitilgan tartibga moslashtiring
             predicted_name = categories[predicted_class]
             confidence = pred[0][predicted_class] * 100
 
@@ -67,7 +67,7 @@ if video_file:
             # Ehtimolliklar grafigi
             st.subheader("Ehtimolliklar:")
             df = pd.DataFrame({
-                'Kategoriya': ['Asadbek', 'Temurbek'],
+                'Kategoriya': ['Temurbek', 'Asadbek'],
                 'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]
             })
 
