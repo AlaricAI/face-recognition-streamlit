@@ -103,16 +103,6 @@ if video_file is not None and model is not None:
             st.metric(label="Ism", value=predicted_name)
             st.write(f"Ishonchlilik darajasi: {confidence:.1f}%")
 
-            # Ehtimolliklar grafigi
-            st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
-            df = pd.DataFrame({
-                'Kategoriya': ['Temurbek', 'Asadbek'],
-                'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]
-            })
-
-            # Saralash
-            df = df.sort_values('Ehtimollik (%)', ascending=False)
-
             
     except Exception as e:
         st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
