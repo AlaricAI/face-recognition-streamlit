@@ -30,12 +30,12 @@ def predict_face(image):
         img = np.array(image)
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         
-        # Yuzni aniqlash
+        # Yuzni aniqlash (parametrlarni yumshatish)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=3, minSize=(20, 20))
         
         if len(faces) == 0:
-            return None, None, img, "Yuz aniqlanmadi"
+            return None, None, img, "Yuz aniqlanmadi: Iltimos, yuzingizni kameraga yaqinroq tuting yoki yorug'likni yaxshilang."
         
         # Birinchi aniqlangan yuzni olish
         (x, y, w, h) = faces[0]
@@ -62,10 +62,9 @@ st.write("Kameradan rasm oling, model shaxsning ismini (Asadbek yoki Temurbek) a
 st.sidebar.header("Ko‘rsatmalar")
 st.sidebar.write("""
 1. Kamerani ishga tushiring va yuzni aniq ko‘rinadigan rasm oling.
-2. Model shaxsning ismini aniqlaydi.
-3. Natijalar ishonchlilik foizi bilan ko‘rsatiladi.
-
-Eslatma: Yaxshiroq natija uchun faqat yuz ko‘rinadigan rasmlardan foydalaning.
+2. Yuzingizni kameraga yaqin tuting va yaxshi yoritilgan joyda turing.
+3. Model shaxsning ismini aniqlaydi va ishonchlilik foizini ko‘rsatadi.
+Eslatma: Yaxshiroq natija uchun yuzingizni to‘g‘ridan-to‘g‘ri kameraga qarating.
 """)
 
 # Kameradan rasm olish uchun tugma
@@ -85,7 +84,7 @@ if video_file is not None and model is not None:
         elif pred is not None:
             # Eng yuqori ehtimollikdagi kategoriyani aniqlash
             predicted_class = np.argmax(pred[0])
-            categories = ['Asadbek', 'Temurbek']  # Tartibni test orqali aniqlang
+            categories = ['Asadbek', 'Temurbek']  # Tartibni model o'qitilgan ma'lumotlarga moslashtiring
             predicted_name = categories[predicted_class]
             confidence = pred[0][predicted_class] * 100
 
