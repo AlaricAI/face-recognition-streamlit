@@ -24,6 +24,9 @@ model = load_my_model()
 # Yuzni aniqlash uchun Haar Cascade Classifier
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
+# Model kategoriyalari (model qanday o'qitilgan bo'lsa shu tartibda)
+CATEGORIES = ['Temurbek', 'Asadbek']  # Model chiqish tartibi shu ko'rinishda
+
 # Yuzni aniqlash va model uchun tayyorlash funksiyasi
 def predict_face(image):
     try:
@@ -86,13 +89,13 @@ if video_file is not None and model is not None:
             st.error(error)
         elif pred is not None:
             # Eng yuqori ehtimollikdagi kategoriyani aniqlash
-            predicted_class = np.argmax(pred)
-            categories = ['Temurbek', 'Asadbek']  # Model o'qitilgan tartibga moslashtiring
-            predicted_name = categories[predicted_class]
-            confidence = pred[predicted_class] * 100
+            predicted_index = np.argmax(pred)
+            confidence = np.max(pred) * 100
+            predicted_name = CATEGORIES[predicted_index]
 
-            # Debug uchun ehtimolliklarni ko‘rsatish
-            st.write(f"Xom ehtimolliklar: Asadbek: {pred[0]*100:.1f}%, Temurbek: {pred[1]*100:.1f}%")
+            # Debug uchun ehtimolliklarni ko'rsatish (tartib model chiqishiga mos)
+            st.write(f"Xom ehtimolliklar: {CATEGORIES[0]}: {pred[0]*100:.1f}%, {CATEGORIES[1]}: {pred[1]*100:.1f}%")
+            st.write(f"Bashorat indeksi: {predicted_index}")
 
             # Yuzni ramkaga olish
             (x, y, w, h) = face_coords
@@ -101,13 +104,17 @@ if video_file is not None and model is not None:
             text = f"{predicted_name}: {confidence:.1f}%"
             cv2.putText(original_image, text, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-            # Tasvirni ko‘rsatish
+            # Tasvirni ko'rsatish
             st.image(original_image, caption="Aniqlangan yuz", width=300)
 
-            # Natijalarni ko‘rsatish
+            # Natijalarni ko'rsatish
             st.subheader("Asosiy natija:")
             st.metric(label="Ism", value=predicted_name)
             st.write(f"Ishonchlilik darajasi: {confidence:.1f}%")
+
+            # Qo'shimcha diagnostika
+            if confidence < 70:  # 70% dan past bo'lsa ogohlantirish
+                st.warning("Ehtiyot bo'ling: Ishondirlik darajasi past!")
 
     except Exception as e:
         st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
