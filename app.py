@@ -11,7 +11,7 @@ import base64
 @st.cache_resource
 def load_my_model():
     try:
-        return keras_load_model('custom_face_model_updated.keras')  # yoki 'custom_face_model.h5'
+        return keras_load_model('custom_face_model.keras')  # yoki 'custom_face_model.h5'
     except Exception as e:
         st.error(f"Model yuklanmadi. Xato: {str(e)}")
         return None
