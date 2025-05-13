@@ -33,6 +33,7 @@ def load_my_model():
             model = keras_load_model(model_path)
         st.success("✅ Model muvaffaqiyatli yuklandi!")
         st.write(f"ℹ️ Model kutilayotgan kirish o'lchami: {model.input_shape}")
+        st.write(f"ℹ️ Model chiqish shakli: {model.output_shape}")  # Qo'shimcha tekshiruv
         return model
     except Exception as e:
         st.error(f"❌ Model yuklanmadi. Xato: {str(e)}")
@@ -42,7 +43,7 @@ def load_my_model():
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 # 4. Kategoriyalar (model shu tartibda o'qitilgan bo'lishi kerak)
-CATEGORIES = ['Temurbek', 'Asadbek']
+CATEGORIES = ['Temurbek', 'Asadbek']  # Ikkala ism ham bo'lishi shart
 
 # 5. Yuzni aniqlash va bashorat qilish funksiyasi
 def predict_face(image):
@@ -74,7 +75,13 @@ def predict_face(image):
         face = face / 255.0
         face = np.expand_dims(face, axis=0)
 
-        pred = model.predict(face)[0]
+        pred = model.predict(face, verbose=0)[0]
+        
+        # Qo'shimcha tekshiruv
+        if len(pred) != len(CATEGORIES):
+            error_msg = f"❌ Model {len(pred)} ta qiymat qaytardi, lekin {len(CATEGORIES)} ta kategoriya kutilmoqda"
+            return None, None, img, error_msg
+            
         return pred, (x, y, w, h), img, None
     except Exception as e:
         return None, None, img, f"❌ Tahlil xatosi: {str(e)}"
@@ -109,9 +116,19 @@ def main():
             if error:
                 st.error(error)
             elif pred is not None:
+                # Qo'shimcha tekshiruv
+                if len(pred) < 2:
+                    st.error(f"❌ Noto'g'ri bashorat formati: {pred}")
+                    return
+                
                 predicted_index = np.argmax(pred)
                 confidence = np.max(pred) * 100
-                predicted_name = CATEGORIES[predicted_index]
+                
+                try:
+                    predicted_name = CATEGORIES[predicted_index]
+                except IndexError:
+                    st.error(f"❌ Noto'g'ri indeks: {predicted_index} (max: {len(CATEGORIES)-1})")
+                    return
 
                 st.write(f"🧪 Model natijalari: {CATEGORIES[0]}: {pred[0]*100:.1f}%, {CATEGORIES[1]}: {pred[1]*100:.1f}%")
                 st.write(f"📍 Eng ishonchli kategoriya: {predicted_name}")
