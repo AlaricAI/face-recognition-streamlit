@@ -1,4 +1,6 @@
-streamlit
-face_recognition
-numpy
-Pillow
+streamlit==1.29.0
+tensorflow==2.12.0
+numpy==1.24.2
+pandas==2.0.3
+plotly==5.18.0
+Pillow==10.0.1
