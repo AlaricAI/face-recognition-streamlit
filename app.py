@@ -57,17 +57,21 @@ if video_file:
 
             # Eng yuqori ehtimollikdagi kategoriyani aniqlash
             predicted_class = np.argmax(pred[0])
-            categories = ['Temurbek', 'Asadbek']  # Model o‘qitilgan tartibga moslashtiring
-            predicted_name = categories[predicted_class]
+            categories = ['Temurbek', 'Asadbek']  # Tartibni o‘zgartirdik, chunki pred[0][1] Temurbekka mos
             confidence = pred[0][predicted_class] * 100
 
-            # Natijani ko‘rsatish
-            st.subheader(f"Tahmin qilingan ism: {predicted_name} ({confidence:.2f}% ehtimollik bilan)")
+            # Ehtimolliklar o‘rtasidagi farqni tekshirish
+            diff = abs(pred[0][0] - pred[0][1]) * 100
+            if diff < 5:  # Agar farq 5% dan kichik bo‘lsa
+                st.subheader("Aniqlik past: Iltimos, boshqa rasm oling.")
+            else:
+                predicted_name = categories[predicted_class]
+                st.subheader(f"Tahmin qilingan ism: {predicted_name} ({confidence:.2f}% ehtimollik bilan)")
 
             # Ehtimolliklar grafigi
-            st.subheader("Ehtimolliklar:")
+            st.subheader("Yuzni aniqlash ehtimollari")
             df = pd.DataFrame({
-                'Kategoriya': ['Asadbek', 'Temurbek'],
+                'Kategoriya': ['Temurbek', 'Asadbek'],
                 'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]
             })
 
