@@ -84,7 +84,7 @@ if video_file is not None and model is not None:
         elif pred is not None:
             # Eng yuqori ehtimollikdagi kategoriyani aniqlash
             predicted_class = np.argmax(pred[0])
-            categories = ['Asadbek', 'Temurbek']  # Tartibni model o'qitilgan ma'lumotlarga moslashtiring
+            categories = ['Temurbek', 'Asadbek']  # Tartibni model o'qitilgan ma'lumotlarga moslashtiring
             predicted_name = categories[predicted_class]
             confidence = pred[0][predicted_class] * 100
 
