@@ -7,11 +7,11 @@ from PIL import Image
 import io
 import base64
 
-# Modelni yuklash (avval modelni o'zingizni ishlatgan holda yuklab oling)
+# Modelni yuklash
 @st.cache_resource
 def load_my_model():
     try:
-        return keras_load_model('custom_face_model.keras')
+        return keras_load_model('custom_face_model_updated.keras')  # yoki 'custom_face_model.h5'
     except Exception as e:
         st.error(f"Model yuklanmadi. Xato: {str(e)}")
         return None
@@ -21,9 +21,11 @@ model = load_my_model()
 # Yuzni aniqlash funksiyasi
 def predict_face(image):
     # Rasmni tayyorlash
-    img = image.resize((224, 224))  # Sizning modelga moslashtirish
+    img = image.resize((50, 37))  # Modelning kiritish shakliga moslashtirish
+    img = img.convert('L')  # Grayscale, agar kerak bo'lsa
     img = np.array(img) / 255.0  # Normalizatsiya
-    img = np.expand_dims(img, axis=0)  # Batch dimension qo'shish
+    img = np.expand_dims(img, axis=-1)  # (50, 37, 1) shaklini yaratish
+    img = np.expand_dims(img, axis=0)  # Batch o‘lchamini qo‘shish
     pred = model.predict(img)
     return pred
 
@@ -48,7 +50,6 @@ if video_file:
 
         # Natijalar ko'rsatiladi
         st.subheader("Boshqa ehtimollar:")
-        # Agar kerak bo'lsa plotly diagrammasi bilan ko'rsatish
         df = pd.DataFrame({
             'Kategoriya': ['Erkak', 'Ayol'],
             'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]
