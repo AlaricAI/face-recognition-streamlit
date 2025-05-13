@@ -30,53 +30,74 @@ def predict_face(image):
     return pred
 
 # Kameradan rasm olish
-st.title('Kamera orqali yuzni tanish')
+st.title('Yuzni Aniqlash Modeli')
+st.write("Kameradan rasm oling, model shaxsning ismini (Asadbek yoki Temurbek) aniqlaydi.")
 
 # Qo‘llanma
-st.sidebar.header("Qo‘llanma")
+st.sidebar.header("Ko‘rsatmalar")
 st.sidebar.write("""
-1. Kamerani ishga tushiring va rasm oling.
-2. Model rasmni tahlil qiladi va Asadbek yoki Temurbek ekanligini aniqlaydi.
+1. Kamerani ishga tushiring va yuzni aniq ko‘rinadigan rasm oling.
+2. Model shaxsning ismini aniqlaydi.
+3. Natijalar ishonchlilik foizi bilan ko‘rsatiladi.
+
+Eslatma: Yaxshiroq natija uchun faqat yuz ko‘rinadigan rasmlardan foydalaning.
 """)
 
 # Kameradan rasm olish uchun tugma
-st.write('Kameradan rasm olish uchun quyidagi tugmani bosing:')
 video_file = st.camera_input("Kamera bilan rasm oling")
 
-if video_file:
+if video_file is not None and model is not None:
     try:
         # Rasmdan img ni oling
         img = Image.open(video_file)
-        st.image(img, caption="Kamera orqali rasm", use_column_width=True)
+        st.image(img, caption="Kamera orqali olingan rasm", width=300)
 
         # Model yordamida bashorat qilish
-        if model is None:
-            st.error("Model yuklanmagan. Iltimos, model faylini tekshiring.")
-        else:
-            pred = predict_face(img)
+        pred = predict_face(img)
 
-            # Eng yuqori ehtimollikdagi kategoriyani aniqlash
-            predicted_class = np.argmax(pred[0])
-            categories = ['Temurbek', 'Asadbek']  # pred[0][0] -> Temurbek, pred[0][1] -> Asadbek
-            confidence = pred[0][predicted_class] * 100
+        # Eng yuqori ehtimollikdagi kategoriyani aniqlash
+        predicted_class = np.argmax(pred[0])
+        categories = ['Asadbek', 'Temurbek']  # Tartibni test orqali aniqlang
+        predicted_name = categories[predicted_class]
+        confidence = pred[0][predicted_class] * 100
 
-            # Ehtimolliklar o‘rtasidagi farqni tekshirish
-            diff = abs(pred[0][0] - pred[0][1]) * 100
-            if diff < 5:  # Agar farq 5% dan kichik bo‘lsa
-                st.subheader("Aniqlik past: Iltimos, boshqa rasm oling.")
-            else:
-                predicted_name = categories[predicted_class]
-                st.subheader(f"Tahmin qilingan ism: {predicted_name} ({confidence:.2f}% ehtimollik bilan)")
+        # Natijalarni ko‘rsatish
+        st.subheader("Asosiy natija:")
+        st.metric(label="Ism", value=predicted_name)
+        st.write(f"Ishonchlilik darajasi: {confidence:.1f}%")
 
-            # Ehtimolliklar grafigi
-            st.subheader("Yuzni aniqlash ehtimollari")
-            df = pd.DataFrame({
-                'Kategoriya': ['Temurbek', 'Asadbek'],
-                'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]  # Tartibni to‘g‘riladik
-            })
+        # Ehtimolliklar grafigi
+        st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
+        df = pd.DataFrame({
+            'Kategoriya': ['Asadbek', 'Temurbek'],
+            'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]
+        })
 
-            fig = px.bar(df, x='Kategoriya', y='Ehtimollik (%)', color='Ehtimollik (%)',
-                         title="Yuzni aniqlash ehtimollari")
-            st.plotly_chart(fig, use_container_width=True)
+        # Saralash
+        df = df.sort_values('Ehtimollik (%)', ascending=False)
+
+        # Plotly bar chart
+        fig = px.bar(df, 
+                     x='Kategoriya', 
+                     y='Ehtimollik (%)',
+                     color='Ehtimollik (%)',
+                     color_continuous_scale='Bluered',
+                     text='Ehtimollik (%)',
+                     title='Yuzni aniqlash ehtimollari')
+        
+        fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+        fig.update_yaxes(range=[0, 100])  # 0-100% oralig‘ini ko‘rsatish
+        
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Pie chart
+        fig_pie = px.pie(df,
+                         names='Kategoriya',
+                         values='Ehtimollik (%)',
+                         title='Ehtimollarning taqsimlanishi')
+        
+        st.plotly_chart(fig_pie, use_container_width=True)
+
     except Exception as e:
-        st.error(f"Xatolik yuz berdi: {str(e)}")
+        st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
