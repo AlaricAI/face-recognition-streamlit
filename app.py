@@ -6,21 +6,12 @@ from tensorflow.keras.models import load_model as keras_load_model
 from PIL import Image
 import io
 import base64
-import os
-
-# Joriy direktoriyadagi fayllarni tekshirish
-st.write(f"Joriy direktoriya: {os.getcwd()}")
-st.write(f"Fayllar ro'yxati: {os.listdir()}")
 
 # Modelni yuklash
 @st.cache_resource
 def load_my_model():
     try:
-        # Fayl nomini yoki yo'lini to'g'ri ko'rsating
-        model_path = 'custom_face_model.keras'  # Agar .h5 bo'lsa, 'custom_face_model.h5' deb o'zgartiring
-        if not os.path.exists(model_path):
-            st.error(f"Fayl topilmadi: {model_path}")
-            return None
+        model_path = 'custom_face_model.keras'
         return keras_load_model(model_path)
     except Exception as e:
         st.error(f"Model yuklanmadi. Xato: {str(e)}")
@@ -61,15 +52,23 @@ if video_file:
             # Natijani ko'rsatish
             st.write(f"Model natijasi: {pred}")
 
+            # Eng yuqori ehtimollikdagi kategoriyani aniqlash
+            predicted_class = np.argmax(pred[0])
+            categories = ['Asadbek', 'Temurbek']
+            predicted_name = categories[predicted_class]
+            confidence = pred[0][predicted_class] * 100
+
+            st.subheader(f"Tahmin qilingan ism: {predicted_name} ({confidence:.2f}% ehtimollik bilan)")
+
             # Natijalar ko'rsatiladi
-            st.subheader("Boshqa ehtimollar:")
+            st.subheader("Ehtimolliklar:")
             df = pd.DataFrame({
-                'Kategoriya': ['Erkak', 'Ayol'],
+                'Kategoriya': ['Asadbek', 'Temurbek'],
                 'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]
             })
 
             fig = px.bar(df, x='Kategoriya', y='Ehtimollik (%)', color='Ehtimollik (%)',
-                         title="Jinsni aniqlash ehtimollari")
+                         title="Yuzni aniqlash ehtimollari")
             st.plotly_chart(fig, use_container_width=True)
     except Exception as e:
         st.error(f"Xatolik yuz berdi: {str(e)}")
@@ -77,6 +76,6 @@ if video_file:
 # Qo'shimcha ma'lumotlar
 st.sidebar.header("Qo'llanma")
 st.sidebar.write("""
-1. Kamerani ishga tushiring va rasm oling
-2. Model rasmni tahlil qiladi va ehtimollarni ko'rsatadi
+1. Kamerani ishga tushiring va rasm oling.
+2. Model rasmni tahlil qiladi va Asadbek yoki Temurbek ekanligini aniqlaydi.
 """)
