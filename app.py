@@ -67,7 +67,7 @@ if video_file:
             # Ehtimolliklar grafigi
             st.subheader("Ehtimolliklar:")
             df = pd.DataFrame({
-                'Kategoriya': ['Temurbek', 'Asadbek'],
+                'Kategoriya': ['Asadbek', 'Temurbek'],
                 'Ehtimollik (%)': [pred[0][0] * 100, pred[0][1] * 100]
             })
 
