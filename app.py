@@ -25,7 +25,7 @@ model = load_my_model()
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 # Model kategoriyalari (model qanday o'qitilgan bo'lsa shu tartibda)
-CATEGORIES = ['Temurbek', 'Asadbek']  # Model chiqish tartibi shu ko'rinishda
+CATEGORIES = ['Asadbek', 'Temurbek']  # Model chiqish tartibi shu ko'rinishda
 
 # Yuzni aniqlash va model uchun tayyorlash funksiyasi
 def predict_face(image):
@@ -112,9 +112,6 @@ if video_file is not None and model is not None:
             st.metric(label="Ism", value=predicted_name)
             st.write(f"Ishonchlilik darajasi: {confidence:.1f}%")
 
-            # Qo'shimcha diagnostika
-            if confidence < 70:  # 70% dan past bo'lsa ogohlantirish
-                st.warning("Ehtiyot bo'ling: Ishondirlik darajasi past!")
 
     except Exception as e:
         st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
