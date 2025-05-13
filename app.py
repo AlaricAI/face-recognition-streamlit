@@ -26,7 +26,7 @@ face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fronta
 
 # Model kategoriyalari - BU QISMI MODEL O'QITILGAN TARTIBGA QAT'IY MOS KELISHI KERAK!
 # Agar model 0-indeks Asadbek, 1-indeks Temurbek deb o'qitilgan bo'lsa:
-CATEGORIES = ['Asadbek', 'Temurbek']  # BU TARTIBNI MODEL O'QITISHDA ISHLATILGAN TARTIBGA MOSLASHTIRING
+CATEGORIES = ['Temurbek', 'Asadbek']  # BU TARTIBNI MODEL O'QITISHDA ISHLATILGAN TARTIBGA MOSLASHTIRING
 
 # Yuzni aniqlash va model uchun tayyorlash funksiyasi
 def predict_face(image):
