@@ -74,7 +74,7 @@ if video_file is not None and model is not None:
             st.error(error)
         elif pred is not None:
             # Kategoriya ro'yxati - modelda o'qitilgan tartibga mos!
-            categories = ['Asadbek', 'Temurbek']
+            categories = ['Temurbek', 'Asadbek']
 
             # Debug: chiqishni ko'rish
             st.write(f"Model chiqishi: {pred}")
