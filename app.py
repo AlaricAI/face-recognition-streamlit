@@ -18,11 +18,11 @@ labels = {0: "Asadbek", 1: "Temurbek"}
 def preprocess_image(image):
     # Rasmni kulrang (grayscale) formatga o‘tkazish
     img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # Rasmni model kiritish o‘lchamiga moslashtirish (224x224)
-    img = cv2.resize(img, (224, 224))
+    # Model kiritish o‘lchamiga moslashtirish (masalan, 64x64, chunki 64*64*3=12288 yaqin 4928 ga)
+    img = cv2.resize(img, (64, 64))  # O‘lchamni sinab ko‘rish uchun 64x64
     # Piksellarni normallashtirish
     img = img / 255.0
-    # Model kiritishi uchun o‘lchamni kengaytirish (1, 224, 224, 1)
+    # Model kiritishi uchun o‘lchamni kengaytirish (1, 64, 64, 1)
     img = np.expand_dims(img, axis=-1)  # Oxirgi o‘qni qo‘shish
     img = np.expand_dims(img, axis=0)   # Batch o‘lchamini qo‘shish
     return img
