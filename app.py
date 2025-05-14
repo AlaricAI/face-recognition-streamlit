@@ -36,28 +36,26 @@ def predict_face(image):
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=3, minSize=(20, 20))
         
         if len(faces) == 0:
-            return None, img, "Yuz aniqlanmadi: Iltimos, yuzingizni kameraga yaqinroq tuting yoki yorug'likni yaxshilang."
+            return None, None, img, "Yuz aniqlanmadi: Iltimos, yuzingizni kameraga yaqinroq tuting yoki yorug'likni yaxshilang."
         
-        predictions = []
-        for (x, y, w, h) in faces:
-            face = img[y:y+h, x:x+w]
+        # Birinchi aniqlangan yuzni olish
+        (x, y, w, h) = faces[0]
+        face = img[y:y+h, x:x+w]
         
-            # Yuzni model uchun tayyorlash
-            face = cv2.resize(face, (50, 37))  # Model o'lchamiga moslashtiring
-            face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)  # Grayscale ga o'tkazish
-            face = face / 255.0  # Normalizatsiya
-            face = np.expand_dims(face, axis=-1)  # (50, 37, 1) shaklini yaratish
-            face = np.expand_dims(face, axis=0)  # Batch o'lchamini qo'shish
-            
-            # Model yordamida bashorat qilish
-            pred = model.predict(face)
-            # Softmax orqali ehtimolliklarni normalizatsiya qilish
-            pred = tf.nn.softmax(pred[0]).numpy()
-            predictions.append((pred, (x, y, w, h)))
+        # Yuzni model uchun tayyorlash
+        face = cv2.resize(face, (50, 37))  # Model o'lchamiga moslashtiring
+        face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)  # Grayscale ga o'tkazish
+        face = face / 255.0  # Normalizatsiya
+        face = np.expand_dims(face, axis=-1)  # (50, 37, 1) shaklini yaratish
+        face = np.expand_dims(face, axis=0)  # Batch o'lchamini qo'shish
         
-        return predictions, img, None
+        # Model yordamida bashorat qilish
+        pred = model.predict(face)
+        # Softmax orqali ehtimolliklarni normalizatsiya qilish
+        pred = tf.nn.softmax(pred[0]).numpy()
+        return pred, (x, y, w, h), img, None
     except Exception as e:
-        return None, img, f"Yuzni tahlil qilishda xato: {str(e)}"
+        return None, None, img, f"Yuzni tahlil qilishda xato: {str(e)}"
 
 # Streamlit ilovasi
 st.title('Yuzni Aniqlash Modeli')
@@ -65,10 +63,12 @@ st.write("Kameradan rasm oling, model shaxsning ismini (Asadbek yoki Temurbek) a
 
 # Qo‘llanma
 st.sidebar.header("Ko‘rsatmalar")
-st.sidebar.write("""1. Kamerani ishga tushiring va yuzni aniq ko‘rinadigan rasm oling.
+st.sidebar.write("""
+1. Kamerani ishga tushiring va yuzni aniq ko‘rinadigan rasm oling.
 2. Yuzingizni kameraga yaqin tuting va yaxshi yoritilgan joyda turing.
 3. Model shaxsning ismini aniqlaydi va ishonchlilik foizini ko‘rsatadi.
-Eslatma: Yaxshiroq natija uchun yuzingizni to‘g‘ridan-to‘g‘ri kameraga qarating.""")
+Eslatma: Yaxshiroq natija uchun yuzingizni to‘g‘ridan-to‘g‘ri kameraga qarating.
+""")
 
 # Kameradan rasm olish uchun tugma
 video_file = st.camera_input("Kamera bilan rasm oling")
@@ -80,62 +80,67 @@ if video_file is not None and model is not None:
         st.image(img, caption="Kamera orqali olingan rasm", width=300)
 
         # Model yordamida bashorat qilish
-        predictions, original_image, error = predict_face(img)
+        pred, face_coords, original_image, error = predict_face(img)
 
         if error:
             st.error(error)
-        elif predictions is not None:
-            # Har bir aniqlangan yuz uchun natijalarni ko‘rsatish
-            original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
-            st.subheader("Barcha aniqlangan yuzlar:")
-            for pred, (x, y, w, h) in predictions:
-                predicted_class = np.argmax(pred)
-                categories = ['Asadbek', 'Temurbek']  # Model o'qitilgan tartibga moslashtiring
-                predicted_name = categories[predicted_class]
-                confidence = pred[predicted_class] * 100
+        elif pred is not None:
+            # Eng yuqori ehtimollikdagi kategoriyani aniqlash
+            predicted_class = np.argmax(pred)
+            categories = ['Asadbek', 'Temurbek']  # Model o'qitilgan tartibga moslashtiring
+            predicted_name = categories[predicted_class]
+            confidence = pred[predicted_class] * 100
 
-                # Yuzni ramkaga olish
-                cv2.rectangle(original_image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                text = f"{predicted_name}: {confidence:.1f}%"
-                cv2.putText(original_image, text, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            # Debug uchun ehtimolliklarni ko‘rsatish
+            st.write(f"Xom ehtimolliklar: Asadbek: {pred[0]*100:.1f}%, Temurbek: {pred[1]*100:.1f}%")
+
+            # Yuzni ramkaga olish
+            (x, y, w, h) = face_coords
+            original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+            cv2.rectangle(original_image, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            text = f"{predicted_name}: {confidence:.1f}%"
+            cv2.putText(original_image, text, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
             # Tasvirni ko‘rsatish
-            st.image(original_image, caption="Aniqlangan yuzlar", width=300)
+            st.image(original_image, caption="Aniqlangan yuz", width=300)
 
             # Natijalarni ko‘rsatish
+            st.subheader("Asosiy natija:")
+            st.metric(label="Ism", value=predicted_name)
+            st.write(f"Ishonchlilik darajasi: {confidence:.1f}%")
+
+            # Ehtimolliklar grafigi
             st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
-            for pred, (x, y, w, h) in predictions:
-                df = pd.DataFrame({
-                    'Kategoriya': ['Asadbek', 'Temurbek'],
-                    'Ehtimollik (%)': [pred[0] * 100, pred[1] * 100]
-                })
+            df = pd.DataFrame({
+                'Kategoriya': ['Asadbek', 'Temurbek'],
+                'Ehtimollik (%)': [pred[0] * 100, pred[1] * 100]
+            })
 
-                # Saralash
-                df = df.sort_values('Ehtimollik (%)', ascending=False)
+            # Saralash
+            df = df.sort_values('Ehtimollik (%)', ascending=False)
 
-                # Plotly bar chart
-                fig = px.bar(df, 
-                             x='Kategoriya', 
-                             y='Ehtimollik (%)',
-                             color='Ehtimollik (%)',
-                             color_continuous_scale='Bluered',
-                             text='Ehtimollik (%)',
-                             title='Yuzni aniqlash ehtimollari')
+            # Plotly bar chart
+            fig = px.bar(df, 
+                         x='Kategoriya', 
+                         y='Ehtimollik (%)',
+                         color='Ehtimollik (%)',
+                         color_continuous_scale='Bluered',
+                         text='Ehtimollik (%)',
+                         title='Yuzni aniqlash ehtimollari')
+            
+            fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+            fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+            fig.update_yaxes(range=[0, 100])  # 0-100% oralig‘ini ko‘rsatish
+            
+            st.plotly_chart(fig, use_container_width=True)
 
-                fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-                fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-                fig.update_yaxes(range=[0, 100])  # 0-100% oralig‘ini ko‘rsatish
-
-                st.plotly_chart(fig, use_container_width=True)
-
-                # Pie chart
-                fig_pie = px.pie(df,
-                                 names='Kategoriya',
-                                 values='Ehtimollik (%)',
-                                 title='Ehtimollarning taqsimlanishi')
-
-                st.plotly_chart(fig_pie, use_container_width=True)
-
+            # Pie chart
+            fig_pie = px.pie(df,
+                             names='Kategoriya',
+                             values='Ehtimollik (%)',
+                             title='Ehtimollarning taqsimlanishi')
+            
+            st.plotly_chart(fig_pie, use_container_width=True)
         else:
             st.error("Yuz aniqlanmadi. Iltimos, yuzingizni kamera oldida aniq ko‘rsating.")
     except Exception as e:
