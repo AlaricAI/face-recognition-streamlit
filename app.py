@@ -87,12 +87,12 @@ if video_file is not None and model is not None:
         elif pred is not None:
             # Eng yuqori ehtimollikdagi kategoriyani aniqlash
             predicted_class = np.argmax(pred)
-            categories = ['Temurbek', 'Asadbek']  # Model o'qitilgan tartibga moslashtiring
+            categories = ['Asadbek', 'Temurbek']  # Model o'qitilgan tartibga moslashtiring
             predicted_name = categories[predicted_class]
             confidence = pred[predicted_class] * 100
 
             # Debug uchun ehtimolliklarni ko‘rsatish
-            st.write(f"Xom ehtimolliklar: Asadbek: {pred[1]*100:.1f}%, Temurbek: {pred[0]*100:.1f}%")
+            st.write(f"Xom ehtimolliklar: Asadbek: {pred[0]*100:.1f}%, Temurbek: {pred[1]*100:.1f}%")
 
             # Yuzni ramkaga olish
             (x, y, w, h) = face_coords
@@ -112,7 +112,7 @@ if video_file is not None and model is not None:
             # Ehtimolliklar grafigi
             st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
             df = pd.DataFrame({
-                'Kategoriya': ['Temurbek', 'Asadbek'],
+                'Kategoriya': ['Asadbek', 'Temurbek'],
                 'Ehtimollik (%)': [pred[0] * 100, pred[1] * 100]
             })
 
