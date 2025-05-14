@@ -92,7 +92,7 @@ if video_file is not None and model is not None:
             confidence = pred[predicted_class] * 100
 
             # Debug uchun ehtimolliklarni ko‘rsatish
-            st.write(f"Xom ehtimolliklar: Asadbek: {pred[0]*100:.1f}%, Temurbek: {pred[1]*100:.1f}%")
+            st.write(f"Xom ehtimolliklar: Asadbek: {pred[1]*100:.1f}%, Temurbek: {pred[0]*100:.1f}%")
 
             # Yuzni ramkaga olish
             (x, y, w, h) = face_coords
