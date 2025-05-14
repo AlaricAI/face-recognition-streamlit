@@ -16,15 +16,16 @@ labels = {0: "Asadbek", 1: "Temurbek"}
 
 # Rasmni oldindan ishlov berish funksiyasi
 def preprocess_image(image):
-    # Rasmni kulrang (grayscale) formatga o‘tkazish
+    # Rasmni kulrang (grayscale) formatga o'tkazish
     img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # Model kiritish o‘lchamiga moslashtirish (masalan, 64x64, chunki 64*64*3=12288 yaqin 4928 ga)
-    img = cv2.resize(img, (64, 64))  # O‘lchamni sinab ko‘rish uchun 64x64
+    # Rasm o'lchamini 64x64 qilib o'zgartirish
+    img = cv2.resize(img, (64, 64))
     # Piksellarni normallashtirish
     img = img / 255.0
-    # Model kiritishi uchun o‘lchamni kengaytirish (1, 64, 64, 1)
-    img = np.expand_dims(img, axis=-1)  # Oxirgi o‘qni qo‘shish
-    img = np.expand_dims(img, axis=0)   # Batch o‘lchamini qo‘shish
+    # Rasmni tekis (flatten) qilish (64*64=4096)
+    img = img.flatten()
+    # Model kiritishi uchun o'lchamni kengaytirish (1, 4096)
+    img = np.expand_dims(img, axis=0)
     return img
 
 # Streamlit ilovasi
@@ -35,12 +36,12 @@ st.write("Kameradan rasm olish uchun quyidagi tugmani bosing.")
 uploaded_image = st.camera_input("Rasmga olish")
 
 if uploaded_image is not None:
-    # Rasmni o‘qish
+    # Rasmni o'qish
     bytes_data = uploaded_image.getvalue()
     nparr = np.frombuffer(bytes_data, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
-    # Rasmni ko‘rsatish
+    # Rasmni ko'rsatish
     st.image(img, channels="BGR", caption="Olingan rasm")
     
     # Rasmni oldindan ishlov berish
@@ -53,9 +54,9 @@ if uploaded_image is not None:
         confidence = prediction[0][predicted_class] * 100
         predicted_name = labels[predicted_class]
         
-        # Natijani ko‘rsatish
-        st.write(f"Bashorat: **{predicted_name}** ({confidence:.2f}% aniqlik bilan)")
+        # Natijani ko'rsatish
+        st.success(f"Bashorat: {predicted_name} ({confidence:.2f}% ishonchlilik)")
     except Exception as e:
         st.error(f"Bashorat qilishda xato: {e}")
 else:
-    st.write("Iltimos, rasm olish uchun kameradan foydalaning.")
+    st.warning("Iltimos, rasm olish uchun kameradan foydalaning.")
