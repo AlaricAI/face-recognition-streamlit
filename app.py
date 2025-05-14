@@ -14,18 +14,23 @@ except Exception as e:
 # Sinf nomlari
 labels = {0: "Asadbek", 1: "Temurbek"}
 
-# Rasmni oldindan ishlov berish funksiyasi
+# Rasmni to'g'ri oldindan ishlov berish funksiyasi
 def preprocess_image(image):
     # Rasmni kulrang (grayscale) formatga o'tkazish
     img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # Rasm o'lchamini 64x64 qilib o'zgartirish
-    img = cv2.resize(img, (64, 64))
+    
+    # Rasmni 56x88 o'lchamga keltirish (56*88=4928)
+    img = cv2.resize(img, (88, 56))  # eni x balandlik
+    
     # Piksellarni normallashtirish
     img = img / 255.0
-    # Rasmni tekis (flatten) qilish (64*64=4096)
+    
+    # Rasmni tekis (flatten) qilish (56*88=4928)
     img = img.flatten()
-    # Model kiritishi uchun o'lchamni kengaytirish (1, 4096)
+    
+    # Model kiritishi uchun o'lchamni kengaytirish (1, 4928)
     img = np.expand_dims(img, axis=0)
+    
     return img
 
 # Streamlit ilovasi
