@@ -1,127 +1,38 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
-import plotly.express as px
-from tensorflow.keras.models import load_model as keras_load_model
-from PIL import Image
 import cv2
-import tensorflow as tf
+import numpy as np
+from PIL import Image
+from tensorflow.keras.models import load_model
 
 # Modelni yuklash
-@st.cache_resource
-def load_my_model():
-    try:
-        model_path = 'custom_face_model.keras'
-        model = keras_load_model(model_path)
-        st.success("Model muvaffaqiyatli yuklandi!")
-        return model
-    except Exception as e:
-        st.error(f"Model yuklanmadi. Xato: {str(e)}")
-        return None
+model = load_model("custom_face_model.keras")
 
-model = load_my_model()
+# Class nomlari (o'zing to'g'irla kerak bo'lsa)
+class_names = ["Asadbek", "Temurbek"]
 
-# Yuzni aniqlash uchun Haar Cascade Classifier
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+st.title("Yuzni aniqlash: Asadbekmi yoki Temurbek?")
 
-# Yuzni aniqlash va model uchun tayyorlash funksiyasi
-def predict_face(image):
-    try:
-        # PIL tasvirini OpenCV formatiga o'tkazish
-        img = np.array(image)
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        
-        # Yuzni aniqlash
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-        
-        if len(faces) == 0:
-            return None, None, img, "Yuz aniqlanmadi: Iltimos, yuzingizni kameraga yaqinroq tuting yoki yorug'likni yaxshilang."
-        
-        # Birinchi aniqlangan yuzni olish
-        (x, y, w, h) = faces[0]
-        face = img[y:y+h, x:x+w]
-        
-        # Yuzni model uchun tayyorlash (Model 4928 o'lchamli kirish kutmoqda)
-        face = cv2.resize(face, (88, 56))  # 88x56=4928 piksel
-        face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)  # Grayscale
-        face = face / 255.0  # Normalizatsiya
-        face = face.flatten()  # Tekis qilish (4928 o'lchamli vektor)
-        face = np.expand_dims(face, axis=0)  # Batch o'lchamini qo'shish (1, 4928)
-        
-        # Model yordamida bashorat qilish
-        pred = model.predict(face)
-        # Softmax orqali ehtimolliklarni normalizatsiya qilish
-        pred = tf.nn.softmax(pred[0]).numpy()
-        return pred, (x, y, w, h), img, None
-    except Exception as e:
-        return None, None, img, f"Yuzni tahlil qilishda xato: {str(e)}"
+# Kamera ochiladi
+camera = st.camera_input("Rasmga olish uchun kamerani yoqing:")
 
-# Streamlit ilovasi
-st.title('Yuzni Aniqlash Modeli')
-st.write("Kameradan rasm oling, model shaxsning ismini (Asadbek yoki Temurbek) aniqlaydi.")
+if camera:
+    # Rasmni ochish
+    img = Image.open(camera)
+    img_array = np.array(img)
 
-# Qo'llanma
-st.sidebar.header("Ko'rsatmalar")
-st.sidebar.write("""
-1. Kamerani ishga tushiring va yuzni aniq ko'rinadigan rasm oling.
-2. Yuzingizni kameraga yaqin tuting va yaxshi yoritilgan joyda turing.
-3. Model shaxsning ismini aniqlaydi va ishonchlilik foizini ko'rsatadi.
-""")
+    # OpenCV RGB -> BGR aylantirish (ba'zi modellar uchun kerak bo'lishi mumkin)
+    img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
 
-# Kameradan rasm olish
-video_file = st.camera_input("Kamera bilan rasm oling")
+    # Modelga mos qilish (o'lcham va normallash)
+    resized = cv2.resize(img_array, (224, 224))  # modelga mos bo'lgan o'lchamni yoz!
+    normalized = resized / 255.0
+    input_tensor = np.expand_dims(normalized, axis=0)
 
-if video_file is not None and model is not None:
-    try:
-        # Rasmdan img ni oling
-        img = Image.open(video_file)
-        st.image(img, caption="Kamera orqali olingan rasm", width=300)
+    # Bashorat qilish
+    predictions = model.predict(input_tensor)[0]
+    predicted_index = np.argmax(predictions)
+    confidence = predictions[predicted_index]
 
-        # Model yordamida bashorat qilish
-        pred, face_coords, original_image, error = predict_face(img)
-
-        if error:
-            st.error(error)
-        elif pred is not None:
-            # Eng yuqori ehtimollikdagi kategoriyani aniqlash
-            predicted_class = np.argmax(pred)
-            categories = ['Asadbek', 'Temurbek']
-            predicted_name = categories[predicted_class]
-            confidence = pred[predicted_class] * 100
-
-            # Yuzni ramkaga olish
-            (x, y, w, h) = face_coords
-            original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
-            cv2.rectangle(original_image, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            text = f"{predicted_name}: {confidence:.1f}%"
-            cv2.putText(original_image, text, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-
-            # Tasvirni ko'rsatish
-            st.image(original_image, caption="Aniqlangan yuz", width=300)
-
-            # Natijalarni ko'rsatish
-            st.subheader("Natijalar:")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric(label="Aniqlangan shaxs", value=predicted_name)
-            with col2:
-                st.metric(label="Ishonchlilik", value=f"{confidence:.1f}%")
-
-            # Ehtimolliklar grafigi
-            st.subheader("Ehtimolliklar taqsimoti")
-            df = pd.DataFrame({
-                'Shaxs': categories,
-                'Ehtimollik (%)': [pred[0]*100, pred[1]*100]
-            })
-            
-            fig = px.bar(df, x='Shaxs', y='Ehtimollik (%)', 
-                         color='Ehtimollik (%)', text='Ehtimollik (%)',
-                         color_continuous_scale='Bluered')
-            fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-            st.plotly_chart(fig, use_container_width=True)
-            
-        else:
-            st.error("Yuz aniqlanmadi. Iltimos, yuzingizni kamera oldida aniq ko'rsating.")
-    except Exception as e:
-        st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
+    # Natijani chiqarish
+    st.subheader(f"Tanilgan shaxs: **{class_names[predicted_index]}**")
+    st.write(f"Aniqlik darajasi: **{confidence * 100:.2f}%**")
