@@ -36,7 +36,7 @@ def predict_face(image):
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=3, minSize=(20, 20))
         
         if len(faces) == 0:
-            return None, None, img, "Yuz aniqlanmadi: Iltimos, yuzingizni kameraga yaqinroq tuting yoki yorug'likni yaxshilang."
+            return None, img, "Yuz aniqlanmadi: Iltimos, yuzingizni kameraga yaqinroq tuting yoki yorug'likni yaxshilang."
         
         predictions = []
         for (x, y, w, h) in faces:
@@ -87,8 +87,7 @@ if video_file is not None and model is not None:
         elif predictions is not None:
             # Har bir aniqlangan yuz uchun natijalarni ko‘rsatish
             original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
-
-            # Yuzlar va natijalarni ko‘rsatish
+            st.subheader("Barcha aniqlangan yuzlar:")
             for pred, (x, y, w, h) in predictions:
                 predicted_class = np.argmax(pred)
                 categories = ['Asadbek', 'Temurbek']  # Model o'qitilgan tartibga moslashtiring
@@ -100,13 +99,12 @@ if video_file is not None and model is not None:
                 text = f"{predicted_name}: {confidence:.1f}%"
                 cv2.putText(original_image, text, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-                # Natijalarni ko‘rsatish
-                st.subheader(f"Yuz {predicted_name} aniqlangan:")
-                st.write(f"Ishonchlilik darajasi: {confidence:.1f}%")
-                st.image(original_image, caption="Aniqlangan yuz", width=300)
+            # Tasvirni ko‘rsatish
+            st.image(original_image, caption="Aniqlangan yuzlar", width=300)
 
-                # Ehtimolliklar grafigi
-                st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
+            # Natijalarni ko‘rsatish
+            st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
+            for pred, (x, y, w, h) in predictions:
                 df = pd.DataFrame({
                     'Kategoriya': ['Asadbek', 'Temurbek'],
                     'Ehtimollik (%)': [pred[0] * 100, pred[1] * 100]
