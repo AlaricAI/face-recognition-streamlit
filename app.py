@@ -6,6 +6,7 @@ from tensorflow.keras.models import load_model as keras_load_model
 from PIL import Image
 import cv2
 import tensorflow as tf
+import uuid
 
 # Modelni yuklash
 @st.cache_resource
@@ -24,6 +25,21 @@ model = load_my_model()
 # Yuzni aniqlash uchun Haar Cascade Classifier
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
+# Sinf tartibini aniqlash uchun foydalanuvchi interfeysi
+st.sidebar.header("Model sozlamalari")
+st.sidebar.write("Modelning sinf tartibini tasdiqlang:")
+class_order = st.sidebar.radio(
+    "Sinf tartibi (model o'qitilgan tartibga moslashtiring):",
+    ["Temurbek (0), Asadbek (1)", "Asadbek (0), Temurbek (1)"],
+    index=0
+)
+
+# Sinf tartibini belgilash
+if class_order == "Temurbek (0), Asadbek (1)":
+    categories = ['Temurbek', 'Asadbek']
+else:
+    categories = ['Asadbek', 'Temurbek']
+
 # Yuzni aniqlash va model uchun tayyorlash funksiyasi
 def predict_face(image):
     try:
@@ -31,7 +47,7 @@ def predict_face(image):
         img = np.array(image)
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         
-        # Yuzni aniqlash (parametrlarni yumshatish)
+        # Yuzni aniqlash
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=3, minSize=(20, 20))
         
@@ -43,14 +59,14 @@ def predict_face(image):
         face = img[y:y+h, x:x+w]
         
         # Yuzni model uchun tayyorlash
-        face = cv2.resize(face, (50, 37))  # Model o'lchamiga moslashtiring
+        face = cv2.resize(face, (50, 37))  # Model o'lchamiga moslashtirish
         face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)  # Grayscale ga o'tkazish
         face = face / 255.0  # Normalizatsiya
         face = np.expand_dims(face, axis=-1)  # (50, 37, 1) shaklini yaratish
         face = np.expand_dims(face, axis=0)  # Batch o'lchamini qo'shish
         
         # Model yordamida bashorat qilish
-        pred = model.predict(face)
+        pred = model.predict(face, verbose=0)
         # Softmax orqali ehtimolliklarni normalizatsiya qilish
         pred = tf.nn.softmax(pred[0]).numpy()
         return pred, (x, y, w, h), img, None
@@ -87,12 +103,12 @@ if video_file is not None and model is not None:
         elif pred is not None:
             # Eng yuqori ehtimollikdagi kategoriyani aniqlash
             predicted_class = np.argmax(pred)
-            categories = ['Temurbek', 'Asadbek']  # Model o'qitilgan tartibga moslashtiring
             predicted_name = categories[predicted_class]
             confidence = pred[predicted_class] * 100
 
-            # Debug uchun ehtimolliklarni ko‘rsatish
-            st.write(f"Xom ehtimolliklar: Asadbek: {pred[0]*100:.1f}%, Temurbek: {pred[1]*100:.1f}%")
+            # Debug uchun xom va normalizatsiyalangan ehtimolliklarni ko‘rsatish
+            st.write(f"Xom ehtimolliklar (softmax'dan oldin): {model.predict(np.expand_dims(np.expand_dims(cv2.cvtColor(cv2.resize(np.array(img)[face_coords[1]:face_coords[1]+face_coords[3], face_coords[0]:face_coords[0]+face_coords[2]], (50, 37)), cv2.COLOR_BGR2GRAY)/255.0, axis=-1), axis=0), verbose=0)[0]}")
+            st.write(f"Normalizatsiyalangan ehtimolliklar: {categories[0]}: {pred[0]*100:.1f}%, {categories[1]}: {pred[1]*100:.1f}%")
 
             # Yuzni ramkaga olish
             (x, y, w, h) = face_coords
@@ -112,8 +128,8 @@ if video_file is not None and model is not None:
             # Ehtimolliklar grafigi
             st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
             df = pd.DataFrame({
-                'Kategoriya': ['Temurbek', 'Asadbek'],
-                'Ehtimollik (%)': [pred[0] * 100, pred[1] * 100]
+                'Kategoriya': categories,
+                'Ehtimollik (%)': [pred[i] * 100 for i in range(len(categories))]
             })
 
             # Saralash
@@ -130,7 +146,7 @@ if video_file is not None and model is not None:
             
             fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
             fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-            fig.update_yaxes(range=[0, 100])  # 0-100% oralig‘ini ko‘rsatish
+            fig.update_yaxes(range=[0, 100])
             
             st.plotly_chart(fig, use_container_width=True)
 
@@ -145,3 +161,5 @@ if video_file is not None and model is not None:
             st.error("Yuz aniqlanmadi. Iltimos, yuzingizni kamera oldida aniq ko‘rsating.")
     except Exception as e:
         st.error(f"Rasmni tahlil qilishda xato: {str(e)}")
+else:
+    st.warning("Model yuklanmadi yoki rasm olingan emas. Iltimos, modelni tekshiring va rasm yuklang.")
