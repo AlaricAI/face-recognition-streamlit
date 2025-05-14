@@ -82,7 +82,7 @@ if video_file is not None and model is not None:
             predicted_name = categories[predicted_class]
             confidence = pred[predicted_class] * 100
 
-            st.write(f"Xom ehtimolliklar: Asadbek: {pred[0]*100:.1f}%, Temurbek: {pred[1]*100:.1f}%")
+            st.write(f"Xom ehtimolliklar: Asadbek: {pred[1]*100:.1f}%, Temurbek: {pred[0]*100:.1f}%")
             st.write(f"np.argmax(pred): {predicted_class}, Tanlangan ism: {predicted_name}")
 
             (x, y, w, h) = face_coords
