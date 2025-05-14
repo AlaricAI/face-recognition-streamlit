@@ -8,7 +8,7 @@ from keras.models import load_model
 st.title("Real-Time Face Recognition")
 
 # Kamera ochish
-camera = cv2.VideoCapture(1)
+camera = cv2.VideoCapture(2)
 
 stframe = st.empty()
 
