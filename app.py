@@ -10,12 +10,13 @@ st.title("🤖 Real-Time Face Recognition")
 st.markdown("Kameraga qarang va shaxsingiz aniqlansin!")
 
 # 🔍 Modelni yuklash
-model = load_model("custom_face_model.keras")
+model = load_model("custom_face_model.keras")  # Modelni Streamlit va GitHub'da ishlayotgan joyga qarab o'zgartiring
+
 class_names = ["Asadbek", "Temurbek"]  # Moslab yoz
 
 # 🧠 Predict funktsiyasi
 def predict_face(face_img):
-    face_resized = cv2.resize(face_img, (224, 224))  # O'zingning model inputiga qarab
+    face_resized = cv2.resize(face_img, (224, 224))  # Model inputiga qarab
     if face_resized.shape[-1] == 4:
         face_resized = cv2.cvtColor(face_resized, cv2.COLOR_RGBA2RGB)
     elif face_resized.shape[-1] == 1:
