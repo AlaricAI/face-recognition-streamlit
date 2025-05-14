@@ -3,53 +3,47 @@ import cv2
 import numpy as np
 from PIL import Image
 import tensorflow as tf
-from tensorflow import keras
+from keras.models import load_model
 
-# Load your custom model
-model = keras.models.load_model('custom_face_model.keras')
+st.title("Real-Time Face Recognition")
 
-# Set the names according to your model's output
-CLASS_NAMES = ['Asadbek', 'Temurbek']
+# Kamera ochish
+camera = cv2.VideoCapture(0)
 
-st.title("Asadbek va Temurbekni Tanib Olish")
+stframe = st.empty()
 
-# Function to predict the face
-def predict_face(image):
-    # Preprocess the image to match your model's expected input
-    img = cv2.resize(image, (224, 224))  # Adjust size based on your model
-    img = img.astype('float32') / 255.0
-    img = np.expand_dims(img, axis=0)
-    
-    # Make prediction
-    predictions = model.predict(img)
-    predicted_class = np.argmax(predictions[0])
-    confidence = np.max(predictions[0]) * 100
-    
-    return CLASS_NAMES[predicted_class], confidence
+# Modelni yuklash
+model = load_model("custom_face_model.keras")
+class_names = ["Asadbek", "Temurbek"]  # bu yerda modelga mos classlar bo'lishi kerak
 
-# Camera input
-picture = st.camera_input("Suratga olish uchun kamera tugmasini bosing")
+def predict_face(face_img):
+    resized = cv2.resize(face_img, (224, 224))  # model inputiga qarab o'lcham o'zgartir
+    img_array = resized / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
+    prediction = model.predict(img_array)[0]
+    best_idx = np.argmax(prediction)
+    name = class_names[best_idx]
+    confidence = prediction[best_idx] * 100
+    return name, confidence
 
-if picture:
-    # Convert the image to OpenCV format
-    image = Image.open(picture)
-    image = np.array(image)
-    
-    # Convert RGB to BGR (OpenCV uses BGR)
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    
-    # Display the captured image
-    st.image(picture, caption="Olingan surat", use_column_width=True)
-    
-    # Make prediction
-    name, confidence = predict_face(image)
-    
-    # Show results
-    st.success(f"Tanilgan shaxs: {name}")
-    st.info(f"Isbot: {confidence:.2f}%")
-    
-    # Add some fun elements
-    if confidence > 90:
-        st.balloons()
-    elif confidence < 70:
-        st.warning("Past aniqlik darajasi. Yana bir bor urinib ko'ring.")
+st.markdown("## 📷 Rasmga olish uchun 'Rasmga olish' tugmasini bosing")
+
+if st.button("📸 Rasmga olish"):
+    ret, frame = camera.read()
+    if not ret:
+        st.error("Kamera orqali rasm olinmadi.")
+    else:
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        st.image(rgb, caption="Olingan rasm", use_column_width=True)
+
+        # Yuzni aniqlash (oddiy haarcascade usuli, istasa dlib yoki MTCNN ishlatish mumkin)
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+        faces = face_cascade.detectMultiScale(rgb, 1.1, 4)
+
+        if len(faces) == 0:
+            st.warning("Yuz topilmadi.")
+        else:
+            for (x, y, w, h) in faces:
+                face_img = rgb[y:y+h, x:x+w]
+                name, confidence = predict_face(face_img)
+                st.success(f"👤 Aniqlangan: **{name}** ({confidence:.2f}% aniqlik)")
