@@ -87,7 +87,7 @@ if video_file is not None and model is not None:
         elif pred is not None:
             # Eng yuqori ehtimollikdagi kategoriyani aniqlash
             predicted_class = np.argmax(pred)
-            categories = ['Asadbek', 'Temurbek']  # Model o'qitilgan tartibga moslashtiring
+            categories = ['Temurbek', 'Asadbek']  # Model o'qitilgan tartibga moslashtiring
             predicted_name = categories[predicted_class]
             confidence = pred[predicted_class] * 100
 
@@ -112,7 +112,7 @@ if video_file is not None and model is not None:
             # Ehtimolliklar grafigi
             st.subheader("Barcha kategoriyalar bo‘yicha ehtimollar:")
             df = pd.DataFrame({
-                'Kategoriya': ['Asadbek', 'Temurbek'],
+                'Kategoriya': ['Temurbek', 'Asadbek'],
                 'Ehtimollik (%)': [pred[0] * 100, pred[1] * 100]
             })
 
