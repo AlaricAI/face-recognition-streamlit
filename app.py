@@ -35,7 +35,7 @@ video_placeholder = st.empty()
 # Button to capture image
 if st.button("Capture Image"):
     # Initialize webcam
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         st.error("Error: Could not access webcam.")
     else:
