@@ -16,14 +16,15 @@ labels = {0: "Asadbek", 1: "Temurbek"}
 
 # Rasmni oldindan ishlov berish funksiyasi
 def preprocess_image(image):
-    # Rasmni model kiritish o‘lchamiga moslashtirish (224x224 deb faraz qilamiz)
-    img = cv2.resize(image, (224, 224))
-    # RGB formatiga o‘tkazish
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # Rasmni kulrang (grayscale) formatga o‘tkazish
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Rasmni model kiritish o‘lchamiga moslashtirish (224x224)
+    img = cv2.resize(img, (224, 224))
     # Piksellarni normallashtirish
     img = img / 255.0
-    # Model kiritishi uchun o‘lchamni kengaytirish
-    img = np.expand_dims(img, axis=0)
+    # Model kiritishi uchun o‘lchamni kengaytirish (1, 224, 224, 1)
+    img = np.expand_dims(img, axis=-1)  # Oxirgi o‘qni qo‘shish
+    img = np.expand_dims(img, axis=0)   # Batch o‘lchamini qo‘shish
     return img
 
 # Streamlit ilovasi
